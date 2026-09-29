@@ -1,24 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ArrowRight, TrendingUp, Shield, Globe, Star } from 'lucide-react'
-import { supabase, supabaseConfigured } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { CATEGORIES } from '../lib/constants'
 import ListingCard from '../components/listings/ListingCard'
 import Spinner from '../components/ui/Spinner'
-
-// Demo listings shown when Supabase is not yet connected
-const DEMO_LISTINGS = [
-  { id: 'd1', title: 'Vintage Leather Jacket', price: 85, currency: 'USD', condition: 'used',     category: 'fashion',     location: 'New York, US',    listing_images: [] },
-  { id: 'd2', title: 'Sony WH-1000XM5 Headphones', price: 220, currency: 'USD', condition: 'like_new', category: 'electronics', location: 'London, UK',   listing_images: [] },
-  { id: 'd3', title: 'Handmade Ceramic Vase Set', price: 45,  currency: 'USD', condition: 'new',      category: 'home',        location: 'Paris, FR',    listing_images: [] },
-  { id: 'd4', title: 'Mountain Bike — Trek Marlin 7', price: 650, currency: 'USD', condition: 'used',  category: 'sports',      location: 'Berlin, DE',   listing_images: [] },
-  { id: 'd5', title: 'The Design of Everyday Things', price: 12, currency: 'USD', condition: 'like_new', category: 'books',    location: 'Toronto, CA',  listing_images: [] },
-  { id: 'd6', title: 'Vintage Rolex Datejust', price: 4200, currency: 'USD', condition: 'used',    category: 'jewelry',     location: 'Dubai, AE',    listing_images: [] },
-  { id: 'd7', title: 'iPad Pro 12.9" M2 — 256GB', price: 780, currency: 'USD', condition: 'like_new', category: 'electronics', location: 'Sydney, AU',  listing_images: [] },
-  { id: 'd8', title: 'LEGO Technic Bugatti Chiron', price: 130, currency: 'USD', condition: 'new',   category: 'toys',        location: 'Amsterdam, NL', listing_images: [] },
-  { id: 'd9', title: 'Acoustic Guitar — Yamaha FG800', price: 180, currency: 'USD', condition: 'used', category: 'music',     location: 'Lagos, NG',    listing_images: [] },
-  { id: 'd10', title: 'Nike Air Jordan 1 Retro High OG', price: 310, currency: 'USD', condition: 'new', category: 'fashion',  location: 'Tokyo, JP',    listing_images: [] },
-]
+import EmptyState from '../components/ui/EmptyState'
 
 const STATS = [
   { label: 'Active Listings',  value: '2.4M+' },
@@ -34,11 +21,6 @@ export default function HomePage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!supabaseConfigured) {
-      setListings(DEMO_LISTINGS)
-      setLoading(false)
-      return
-    }
     async function fetchHome() {
       setLoading(true)
       try {
@@ -52,9 +34,10 @@ export default function HomePage() {
           ...l,
           listing_images: [...(l.listing_images || [])].sort((a, b) => a.sort_order - b.sort_order),
         }))
-        setListings(normalized.length ? normalized : DEMO_LISTINGS)
-      } catch {
-        setListings(DEMO_LISTINGS)
+        setListings(normalized)
+      } catch (err) {
+        console.error('Failed to fetch listings:', err)
+        setListings([])
       } finally {
         setLoading(false)
       }
@@ -195,16 +178,9 @@ export default function HomePage() {
         {/* ── Featured listings ── */}
         <section aria-labelledby="featured-heading">
           <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 id="featured-heading" className="text-xl font-bold text-gray-900 dark:text-white">
-                {supabaseConfigured ? 'Featured Listings' : 'Example Listings'}
-              </h2>
-              {!supabaseConfigured && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  Connect Supabase to show real listings
-                </p>
-              )}
-            </div>
+            <h2 id="featured-heading" className="text-xl font-bold text-gray-900 dark:text-white">
+              Featured Listings
+            </h2>
             <Link to="/browse" className="text-sm font-medium text-brand-500 hover:text-brand-600 flex items-center gap-1">
               View all <ArrowRight size={14} />
             </Link>
@@ -212,6 +188,8 @@ export default function HomePage() {
 
           {loading ? (
             <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+          ) : listings.length === 0 ? (
+            <EmptyState title="No listings yet" description="Explore or create the first listing to get started." />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {listings.map(l => <ListingCard key={l.id} listing={l} />)}
