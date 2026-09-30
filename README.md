@@ -4,6 +4,8 @@
 
 Built with React + Vite, Tailwind CSS, and Supabase (Auth, Postgres, Storage, Realtime).
 
+**Live:** https://kenshop1.netlify.app/
+
 ---
 
 ## Features
